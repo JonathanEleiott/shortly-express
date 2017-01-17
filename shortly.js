@@ -33,6 +33,7 @@ app.use(session({
 
 app.get('/', 
 function(req, res) {
+  console.log('rootsession', req.session);
   if (req.session.authentication) {
     console.log('Send to index');
     res.render('index');
@@ -46,8 +47,8 @@ function(req, res) {
 app.get('/create', 
 function(req, res) {
   if (req.session.authentication) {
-    console.log('Send to index');
-    res.render('create');
+    console.log('send to create');
+    res.render('index');
   } else {
     console.log('create session error');
     req.session.error = 'Access denied!';
@@ -57,7 +58,7 @@ function(req, res) {
 
 app.get('/links', 
 function(req, res) {
-  if (req.session.user) {
+  if (req.session.authentication) {
     Links.reset().fetch().then(function(links) {
       res.status(200).send(links.models);
     });
@@ -104,6 +105,7 @@ function(req, res) {
 /************************************************************/
 
 app.get('/login', function(req, res) {
+  console.log('login session', req.session);
   res.render('login');
 });
 

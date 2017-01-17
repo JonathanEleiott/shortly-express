@@ -28,16 +28,15 @@ exports.checkUserInDb = function(req, res) {
   .where('username', '=', req.body.username)
   .then(function(username) {
     if (username['0'] && username['0']['username']) {
-      db.knex('users')
-      .where('password', '=', req.body.password)
-      .then(function(password) {
-        if (password['0'] && password['0']['password']) {
+      return new Promise(function(resolve, rej) {
+        bcrypt.compare(req.body.password, username['0']['password'], function(err, bool) {
+          if (err) {
+            rej(err);
+          }
+          console.log('res', res.session);
           req.session.authentication = true;
           res.redirect('/index');
-        } else {
-          req.session.error = 'Access denied!';
-          res.redirect('/login');
-        }
+        });
       });
     } else {
       req.session.error = 'Access denied!';
@@ -65,10 +64,10 @@ exports.checkForDuplicates = function(req, res) {
   });
 };
 
-exports.makeUser = function(username, password) {
+exports.makeUser = function(req, res) {
   return new Promise(function(resolve, reject) {
-    bcrypt.getSalt(10, function(err, salt) {
-      bcrypt.hash(password, salt, null, function(err, hash) {
+    bcrypt.genSalt(10, function(err, salt) {  
+      bcrypt.hash(req.body.password, salt, null, function(err, hash) {
         if (err) {
           console.log('hashing the password failed' + err);
           reject(err);
@@ -88,6 +87,9 @@ exports.makeUser = function(username, password) {
       password: hash
     }).save();
     res.redirect('/');
+  })
+  .catch(function(err) {
+    console.log('error in makeUser', err);
   });
 };
 
