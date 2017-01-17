@@ -11,6 +11,8 @@ var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 var helpers = require('./helperFunctions');
+// var cookieParser = require('cookie-parser');
+var session = require('express-session');
 
 var app = express();
 
@@ -22,31 +24,35 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+// app.use(cookieParser());
+app.use(session({
+  secret: 'identity',
+  resave: true,
+  saveUninitialized: true
+}));
 
 app.get('/', 
 function(req, res) {
-  helpers.checkUser(req, res);
+  helpers.checkUserAuthorization(req, res);
+  res.render('index');
 });
 
 app.get('/create', 
 function(req, res) {
-  helpers.checkUser(req, res);
+  helpers.checkUserAuthorization(req, res);
+  res.render('create');
 });
 
 app.get('/links', 
 function(req, res) {
-  db.knex('users')
-    .where('username', '=', req.body.username)
-    .then(function(user) {
-      console.log('user', user)
-      if (user[0].username === req.body.username && user[0].password === req.body.password) {
-        Links.reset().fetch().then(function(links) {
-          res.status(200).send(links.models);
-        });
-      } else {
-        res.redirect('/login');
-      }
+  if (req.session.user) {
+    Links.reset().fetch().then(function(links) {
+      res.status(200).send(links.models);
     });
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
 });
 
 app.post('/links', 
@@ -94,7 +100,7 @@ app.get('/signup', function(req, res) {
 });
 
 app.post('/login', function(req, res) {
-  helpers.checkUser(req, res);
+  helpers.checkUserInDb(req, res);
 });
 
 app.post('/signup', function(req, res) {
@@ -102,7 +108,8 @@ app.post('/signup', function(req, res) {
     username: req.body.username,
     password: req.body.password
   }).save();
-  res.render('index');
+  req.session.authentication = true;
+  res.redirect('/index');
 });
 
 /************************************************************/
