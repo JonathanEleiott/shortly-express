@@ -10,6 +10,7 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
+var helpers = require('./helperFunctions');
 
 var app = express();
 
@@ -22,22 +23,30 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
-
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  helpers.checkUser(req, res);
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  helpers.checkUser(req, res);
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.status(200).send(links.models);
-  });
+  db.knex('users')
+    .where('username', '=', req.body.username)
+    .then(function(user) {
+      console.log('user', user)
+      if (user[0].username === req.body.username && user[0].password === req.body.password) {
+        Links.reset().fetch().then(function(links) {
+          res.status(200).send(links.models);
+        });
+      } else {
+        res.redirect('/login');
+      }
+    });
 });
 
 app.post('/links', 
@@ -76,7 +85,25 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
 
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
+
+app.post('/login', function(req, res) {
+  helpers.checkUser(req, res);
+});
+
+app.post('/signup', function(req, res) {
+  new User({
+    username: req.body.username,
+    password: req.body.password
+  }).save();
+  res.render('index');
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
