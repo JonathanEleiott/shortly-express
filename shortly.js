@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -10,7 +10,7 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
-var helpers = require('./helperFunctions');
+var helpers = require('./app/helperFunctions');
 // var cookieParser = require('cookie-parser');
 var session = require('express-session');
 
@@ -33,14 +33,26 @@ app.use(session({
 
 app.get('/', 
 function(req, res) {
-  helpers.checkUserAuthorization(req, res);
-  res.render('index');
+  if (req.session.authentication) {
+    console.log('Send to index');
+    res.render('index');
+  } else {
+    console.log('root session error');
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
 });
 
 app.get('/create', 
 function(req, res) {
-  helpers.checkUserAuthorization(req, res);
-  res.render('create');
+  if (req.session.authentication) {
+    console.log('Send to index');
+    res.render('create');
+  } else {
+    console.log('create session error');
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
 });
 
 app.get('/links', 
@@ -104,12 +116,7 @@ app.post('/login', function(req, res) {
 });
 
 app.post('/signup', function(req, res) {
-  new User({
-    username: req.body.username,
-    password: req.body.password
-  }).save();
-  req.session.authentication = true;
-  res.redirect('/index');
+  helpers.checkForDuplicates(req, res);
 });
 
 /************************************************************/
