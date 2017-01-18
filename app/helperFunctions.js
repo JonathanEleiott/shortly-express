@@ -33,9 +33,9 @@ exports.checkUserInDb = function(req, res) {
           if (err) {
             rej(err);
           }
-          console.log('res', res.session);
+          // console.log('res', res.session);
           req.session.authentication = true;
-          res.redirect('/index');
+          res.redirect('/');
         });
       });
     } else {
@@ -56,7 +56,7 @@ exports.checkForDuplicates = function(req, res) {
   .where('username', '=', req.body.username)
   .then(function(username) {
     if (username['0'] && username['0']['username']) {
-      console.log('USERNAME EXISTS');
+      // console.log('USERNAME EXISTS');
       res.redirect('/signup');
     } else {
       exports.makeUser(req, res);
@@ -72,7 +72,7 @@ exports.makeUser = function(req, res) {
           console.log('hashing the password failed' + err);
           reject(err);
         } else {
-          console.log('hash was successful');
+          // console.log('hash was successful');
           resolve(hash);
         }
       });
@@ -80,7 +80,7 @@ exports.makeUser = function(req, res) {
   })
   .then(function(hash) {
     // return db.createUser(username, hash);
-    console.log('storeUser');
+    // console.log('storeUser');
     req.session.authentication = true;
     new User({
       username: req.body.username,

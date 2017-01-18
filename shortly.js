@@ -33,12 +33,12 @@ app.use(session({
 
 app.get('/', 
 function(req, res) {
-  console.log('rootsession', req.session);
+  // console.log('rootsession', req.session);
   if (req.session.authentication) {
-    console.log('Send to index');
+    // console.log('Send to index');
     res.render('index');
   } else {
-    console.log('root session error');
+    // console.log('root session error');
     req.session.error = 'Access denied!';
     res.redirect('/login');
   }
@@ -47,10 +47,10 @@ function(req, res) {
 app.get('/create', 
 function(req, res) {
   if (req.session.authentication) {
-    console.log('send to create');
+    // console.log('send to create');
     res.render('index');
   } else {
-    console.log('create session error');
+    // console.log('create session error');
     req.session.error = 'Access denied!';
     res.redirect('/login');
   }
@@ -73,7 +73,7 @@ function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
-    console.log('Not a valid url: ', uri);
+    // console.log('Not a valid url: ', uri);
     return res.sendStatus(404);
   }
 
@@ -105,8 +105,12 @@ function(req, res) {
 /************************************************************/
 
 app.get('/login', function(req, res) {
-  console.log('login session', req.session);
-  res.render('login');
+  // console.log('login session', req.session);
+  if (req.session.authentication) {
+    res.redirect('/');
+  } else {
+    res.render('login');
+  }
 });
 
 app.get('/signup', function(req, res) {
@@ -119,6 +123,11 @@ app.post('/login', function(req, res) {
 
 app.post('/signup', function(req, res) {
   helpers.checkForDuplicates(req, res);
+});
+
+app.get('/logout', function(req, res) {
+  req.session.authentication = false;
+  res.redirect('/login');
 });
 
 /************************************************************/
